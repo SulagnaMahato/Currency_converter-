@@ -1,85 +1,58 @@
-const dropList = document.querySelectorAll("form select"), // selecting all select tags
-  fromCurrency = document.querySelector(".from select"), // selecting FROM select tag
-  toCurrency = document.querySelector(".to select"), // selecting TO select tag
-  getButton = document.querySelector("form button"); // selecting button tag
+const BASE_URL =
+"https://2024-03-06.currency-api.pages.dev/v1/currencies/";
 
-// creating object of country list
-for (let i = 0; i < dropList.length; i++) {
-  for (let currency_code in country_list) {
-    // if i is 0 then currency code is equal to MXN then selected will be true otherwise selected will be false
-    let selected =
-      i == 0
-        ? currency_code == "IN"
-          ? "selected"
-          : ""
-        : currency_code == "US"
-        ? "selected"
-        : "";
-    // creating option tag with passing currency code and selected variable
-    let optionTag = `<option value="${currency_code}" ${selected}>${currency_code}</option>`;
-    // inserting option tag inside select tag
-    dropList[i].insertAdjacentHTML("beforeend", optionTag);
+const dropdowns = document.querySelectorAll(".dropdown select");
+const btn = document.querySelector("form button");
+const fromCurr = document.querySelector(".from select");
+const toCurr = document.querySelector(".to select");
+const msg = document.querySelector(".msg");
+
+for (let select of dropdowns) {
+  for (currCode in countryList) {
+    let newOption = document.createElement("option");
+    newOption.innerText = currCode;
+    newOption.value = currCode;
+    if (select.name === "from" && currCode === "USD") {
+      newOption.selected = "selected";
+    } else if (select.name === "to" && currCode === "INR") {
+      newOption.selected = "selected";
+    }
+    select.append(newOption);
   }
-  dropList[i].addEventListener("change", (e) => {
-    loadFlag(e.target); // calling loadFlag with passing select element
+
+  select.addEventListener("change", (evt) => {
+    updateFlag(evt.target);
   });
 }
 
-// creating img tag and inserting it inside select tag
-function loadFlag(element) {
-  for (let code in country_list) {
-    if (code == element.value) {
-      // if currency code of country list is equal to option value
-      let imgTag = element.parentElement.querySelector("img"); // selecting img tag of particular drop list
-      // passing country code of a selected currency code in a img url
-      imgTag.src = `https://flagcdn.com/48x36/${country_list[
-        code
-      ].toLowerCase()}.png`;
-    }
+const updateExchangeRate = async () => {
+  let amount = document.querySelector(".amount input");
+  let amtVal = amount.value;
+  if (amtVal === "" || amtVal < 1) {
+    amtVal = 1;
+    amount.value = "1";
   }
-}
-// calling loadFlag with passing select element (fromCurrency) of FROM
-window.addEventListener("load", () => {
-  getExchangeRate();
-});
-// calling getExchangeRate
-getButton.addEventListener("click", (e) => {
-  e.preventDefault(); //preventing form from submitting
-  getExchangeRate();
-});
-// calling loadFlag with passing select element (fromCurrency) of FROM
-const exchangeIcon = document.querySelector("form .icon");
-exchangeIcon.addEventListener("click", () => {
-  let tempCode = fromCurrency.value; // temporary currency code of FROM drop list
-  fromCurrency.value = toCurrency.value; // passing TO currency code to FROM currency code
-  toCurrency.value = tempCode; // passing temporary currency code to TO currency code
-  loadFlag(fromCurrency); // calling loadFlag with passing select element (fromCurrency) of FROM
-  loadFlag(toCurrency); // calling loadFlag with passing select element (toCurrency) of TO
-  getExchangeRate(); // calling getExchangeRate
+  const URL = `${BASE_URL}/${fromCurr.value.toLowerCase()}.json`;
+  let response = await fetch(URL);
+  let data = await response.json();
+  let rate = data[toCurr.value.toLowerCase()];
+  let finalAmount = (data[fromCurr.value.toLowerCase()][toCurr.value.toLowerCase()]*parseInt(amount.value)).toFixed(2);
+  msg.innerText = `${amtVal} ${fromCurr.value} = ${finalAmount} ${toCurr.value}`;
+};
+
+const updateFlag = (element) => {
+  let currCode = element.value;
+  let countryCode = countryList[currCode];
+  let newSrc = `https://flagsapi.com/${countryCode}/flat/64.png`;
+  let img = element.parentElement.querySelector("img");
+  img.src = newSrc;
+};
+
+btn.addEventListener("click", (evt) => {
+  evt.preventDefault();
+  updateExchangeRate();
 });
 
-// fetching api response
-function getExchangeRate() {
-  const amount = document.querySelector("form input");
-  const exchangeRateTxt = document.querySelector("form .exchange-rate");
-  let amountVal = amount.value;
-  // if user don't enter any value or enter 0 then we'll put 1 value by default in the input field
-  if (amountVal == "" || amountVal == "0") {
-    amount.value = "1";
-    amountVal = 1;
-  }
-  exchangeRateTxt.innerText = "Getting exchange rate";
-  let url = `https://v6.exchangerate-api.com/v6/87e5741f31d1f449a19b2261/latest/${fromCurrency.value}`;
-  // fetching api response and returning it with parsing into js obj and in another then method receiving that obj
-  fetch(url)
-    .then((response) => response.json())
-    .then((result) => {
-      let exchangeRate = result.conversion_rates[toCurrency.value]; // getting user selected TO currency rate
-      let totalExRate = (amountVal * exchangeRate).toFixed(2); // multiplying user entered value with selected TO currency rate
-      exchangeRateTxt.innerText = `${amountVal} ${fromCurrency.value} = ${totalExRate} ${toCurrency.value}`;
-    })
-    .catch(() => {
-      // if user is offline or any other error occured while fetching data then catch function will run
-      exchangeRateTxt.innerText = "Opp, something happens";
-    });
-} 
+window.addEventListener("load", () => {
+  updateExchangeRate();
+});
