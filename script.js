@@ -9,10 +9,10 @@ for (let i = 0; i < dropList.length; i++) {
     // if i is 0 then currency code is equal to MXN then selected will be true otherwise selected will be false
     let selected =
       i == 0
-        ? currency_code == "INR"
+        ? currency_code == "IN"
           ? "selected"
           : ""
-        : currency_code == "USD"
+        : currency_code == "US"
         ? "selected"
         : "";
     // creating option tag with passing currency code and selected variable
