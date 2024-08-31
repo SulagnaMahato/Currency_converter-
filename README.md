@@ -22,7 +22,7 @@ To run this project, you need to have:
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/yourusername/currency-converter.git
+    git clone https://github.com/SulagnaMahato/currency-converter.git
     cd currency-converter
     ```
 
